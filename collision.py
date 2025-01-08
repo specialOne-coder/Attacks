@@ -2,7 +2,7 @@ import hashlib
 import random
 import string
 
-# Simple Block structure
+# Block structure
 class Block:
     def __init__(self, index, previous_hash, data):
         self.index = index
@@ -12,9 +12,9 @@ class Block:
 
     def compute_hash(self):
         data_to_hash = f"{self.index}{self.previous_hash}{self.data}"
-        return hashlib.sha256(data_to_hash.encode()).hexdigest()
+        return hashlib.md5(data_to_hash.encode()).hexdigest()[:6]  # Truncated MD5 for demonstration purposes
 
-# Simple Blockchain
+# Blockchain structure
 class Blockchain:
     def __init__(self):
         self.chain = []
@@ -29,35 +29,39 @@ class Blockchain:
         new_block = Block(len(self.chain), previous_block.hash, data)
         self.chain.append(new_block)
 
-# Simulating a simple blockchain
+    def print_chain(self):
+        for block in self.chain:
+            print(f"Index: {block.index}")
+            print(f"Previous Hash: {block.previous_hash}")
+            print(f"Data: {block.data}")
+            print(f"Hash: {block.hash}\n")
+
+# Simulating the Blockchain
 blockchain = Blockchain()
 blockchain.add_block("Block 1 Data")
 blockchain.add_block("Block 2 Data")
 blockchain.add_block("Block 3 Data")
 
-# Print the blockchain
-for block in blockchain.chain:
-    print(f"Index: {block.index}")
-    print(f"Previous Hash: {block.previous_hash}")
-    print(f"Data: {block.data}")
-    print(f"Hash: {block.hash}\n")
+print("\n--- Blockchain ---\n")
+blockchain.print_chain()
 
-# Simulating an attack: Finding a collision in the hash
-# Simplified hash for illustration purposes
-def simplified_hash(data):
-    return hashlib.md5(data.encode()).hexdigest()[:6]  # Using MD5 and truncating to 6 characters
+# Collision Attack Simulation within Blockchain
+print("\n--- Simulating Collision Attack ---\n")
 
-# Finding a collision
-print("\nFinding a collision...")
-found = False
-hash_dict = {}
+def find_collision_in_blockchain(blockchain):
+    for block in blockchain.chain:
+        print(f"Testing collisions for Block {block.index}...")
+        original_hash = block.hash
+        found = False
+        while not found:
+            # Generate random data and compute hash
+            random_data = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+            test_hash = hashlib.md5(f"{block.index}{block.previous_hash}{random_data}".encode()).hexdigest()[:6]
 
-while not found:
-    random_data = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
-    hash_value = simplified_hash(random_data)
-    
-    if hash_value in hash_dict:
-        print(f"Collision found!\nData 1: {hash_dict[hash_value]}\nData 2: {random_data}\nHash: {hash_value}")
-        found = True
-    else:
-        hash_dict[hash_value] = random_data
+            if test_hash == original_hash and random_data != block.data:
+                print(f"Collision found for Block {block.index}!\n")
+                print(f"Original Data: {block.data}\nRandom Data: {random_data}\nHash: {original_hash}\n")
+                found = True
+
+# Execute the collision attack simulation
+find_collision_in_blockchain(blockchain)
